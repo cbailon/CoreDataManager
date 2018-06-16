@@ -12,7 +12,7 @@ class HomePresenter {
     
     weak var viewController: HomeViewController?
     
-    func presentNames (persons: [Person]?) {
+    func presentPersons (persons: [Person]?) {
         
         var names = [String]()
         
@@ -24,5 +24,18 @@ class HomePresenter {
         
         self.viewController?.model.names = names
         self.viewController?.tableView.reloadData()
+    }
+    
+    func addPerson (_ person: Person) {
+        guard let name = person.name else {
+            return
+        }
+        self.viewController?.model.names.append(name)
+        self.viewController?.tableView.insertRows(at: [IndexPath(row: self.viewController!.model.names.count - 1, section: 0)], with: .right)
+    }
+    
+    func removePerson (index: Int) {
+        self.viewController?.model.names.remove(at: index)
+        self.viewController?.tableView.deleteRows(at: [IndexPath(row: index, section: 0)], with: .top)
     }
 }

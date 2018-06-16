@@ -49,10 +49,9 @@ public class CoreDataManager {
         managedContext.delete(object)
     }
     
-    public static func save (completion: () -> Void) {
+    public static func save () {
         let managedContext = self.getManagedContext()
         do {
-            completion()
             try managedContext.save()
         } catch let error as NSError {
             print("Could not save. \(error), \(error.userInfo)")

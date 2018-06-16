@@ -21,7 +21,7 @@ class HomeInteractor {
     //    MARK: Bussines logic
     
     func getNames () {
-        presenter.presentNames(persons: people)
+        presenter.presentPersons(persons: people)
     }
     
     func addName (name: String?) {
@@ -29,12 +29,11 @@ class HomeInteractor {
             print("El nombre es nil")
             return
         }
+        let person: Person = CoreDataManager.createObject()
+        person.name = name
+        CoreDataManager.save()
         
-        CoreDataManager.save {
-            let person: Person = CoreDataManager.createObject()
-            person.name = name
-        }
-        self.getNames()
+        self.presenter.addPerson(person)
     }
     
     func editName (index: Int, newName: String?) {
@@ -48,10 +47,10 @@ class HomeInteractor {
             print("index error")
             return
         }
-        CoreDataManager.save {
-            let person = people[index]
-            person.name = name
-        }
+        
+        let person = people[index]
+        person.name = name
+        CoreDataManager.save()
         
         self.getNames()
     }
@@ -62,11 +61,11 @@ class HomeInteractor {
             print("index error")
             return
         }
-        CoreDataManager.save {
-            let list: [Person] = CoreDataManager.getInfo()
-            CoreDataManager.deleteObject(list[index])
-        }
         
-        self.getNames()
+        let list: [Person] = CoreDataManager.getInfo()
+        CoreDataManager.deleteObject(list[index])
+        CoreDataManager.save ()
+        
+        self.presenter.removePerson(index: index)
     }
 }
