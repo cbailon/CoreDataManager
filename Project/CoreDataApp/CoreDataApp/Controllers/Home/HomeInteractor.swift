@@ -13,8 +13,8 @@ class HomeInteractor {
 
     var presenter: HomePresenter!
     
-    private var people: [Person] {
-        return CoreDataManager.getInfo()
+    private var people: [Person]? {
+        return try? CoreDataManager.shared.getAllEntitys() ?? []
     }
     
     
@@ -29,17 +29,20 @@ class HomeInteractor {
             print("El nombre es nil")
             return
         }
-        let person: Person = CoreDataManager.createObject()
-        person.name = name
-        CoreDataManager.save()
-        
-        self.presenter.addPerson(person)
+        do {
+            let person: Person = try CoreDataManager.shared.createObject()
+            person.name = name
+            try CoreDataManager.shared.save()
+            self.presenter.addPerson(person)
+        } catch {}
     }
     
     func editName (index: Int, newName: String?) {
         
+        guard let people = self.people else { return }
+        
         guard let name = newName else {
-            self.delateName(index: index)
+            self.deleteName(index: index)
             return
         }
         
@@ -50,22 +53,30 @@ class HomeInteractor {
         
         let person = people[index]
         person.name = name
-        CoreDataManager.save()
+        do {
+            try CoreDataManager.shared.save()
+        } catch {}
+        
         
         self.getNames()
     }
     
-    func delateName (index: Int) {
+    func deleteName (index: Int) {
+        
+        guard let people = self.people else { return }
         
         if index >= people.count {
             print("index error")
             return
         }
         
-        let list: [Person] = CoreDataManager.getInfo()
-        CoreDataManager.deleteObject(list[index])
-        CoreDataManager.save ()
+        do {
+            guard let list: [Person] = try CoreDataManager.shared.getAllEntitys() else { return }
+            try CoreDataManager.shared.deleteObject(list[index])
+            try CoreDataManager.shared.save ()
+            
+            self.presenter.removePerson(index: index)
+        } catch { }
         
-        self.presenter.removePerson(index: index)
     }
 }

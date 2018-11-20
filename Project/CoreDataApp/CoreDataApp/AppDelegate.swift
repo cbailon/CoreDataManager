@@ -17,7 +17,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        CoreDataManager.configure(withContext: self.persistentContainer.viewContext)
+        CoreDataManager.shared.configure(withContext: self.persistentContainer.viewContext)
         return true
     }
 

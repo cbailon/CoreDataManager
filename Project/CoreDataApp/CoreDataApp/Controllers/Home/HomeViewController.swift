@@ -110,7 +110,7 @@ extension HomeViewController: UITableViewDataSource {
         
         switch editingStyle {
         case .delete:
-            self.interactor.delateName(index: indexPath.row)
+            self.interactor.deleteName(index: indexPath.row)
             break
         default:
             break

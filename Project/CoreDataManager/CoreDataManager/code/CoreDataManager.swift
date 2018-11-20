@@ -10,51 +10,70 @@ import CoreData
 
 public class CoreDataManager {
     
-    private static var managedContext: NSManagedObjectContext?
+    enum CoreDataManagerError: Error {
+        case managedContextNotSet
+        case cantGetEntity
+        case cantSaveContext
+    }
     
-    public static func configure (withContext context: NSManagedObjectContext) {
+    public static let shared = CoreDataManager()
+    
+    private var managedContext: NSManagedObjectContext?
+    
+    public func configure (withContext context: NSManagedObjectContext) {
         self.managedContext = context
     }
     
-    public static func  getInfo <T: NSManagedObject> (withPredicate predicate: NSPredicate? = nil) -> [T] {
-        
-        let managedContext = self.getManagedContext()
-        
-        let fetchRequest: NSFetchRequest<T> = NSFetchRequest<T>(entityName: String(describing: T.self));
-        
-        if let predicate = predicate {
-            fetchRequest.predicate = predicate
-        }
-        
+    public func getAllEntitys <T: NSManagedObject> (withPredicate predicate: NSPredicate? = nil) throws -> [T]? {
         do {
-            return try managedContext.fetch(fetchRequest)
-        } catch let error as NSError {
-            print("Could not fetch. \(error), \(error.userInfo)")
-            return []
+            let managedContext = try self.getManagedContext()
+            let fetchRequest: NSFetchRequest<T> = NSFetchRequest<T>(entityName: String(describing: T.self));
+            
+            if let predicate = predicate {
+                fetchRequest.predicate = predicate
+            }
+            
+            do {
+                return try managedContext.fetch(fetchRequest)
+            } catch {
+                throw CoreDataManagerError.cantGetEntity
+            }
         }
     }
     
-    public static func createObject <T: NSManagedObject> () -> T {
-        
-        let managedContext = self.getManagedContext()
-        
-        guard let entity = NSEntityDescription.entity(forEntityName: String(describing: T.self), in: managedContext), let obj = NSManagedObject(entity: entity, insertInto: managedContext) as? T else {
-            fatalError("entity dosen´t exist")
-        }
-        return obj
-    }
-    
-    public static func deleteObject (_ object: NSManagedObject) {
-        let managedContext = self.getManagedContext()
-        managedContext.delete(object)
-    }
-    
-    public static func save () {
-        let managedContext = self.getManagedContext()
+    public func getFirstEntity <T: NSManagedObject> (withPredicate predicate: NSPredicate? = nil) throws -> T? {
         do {
-            try managedContext.save()
-        } catch let error as NSError {
-            print("Could not save. \(error), \(error.userInfo)")
+            return try self.getAllEntitys(withPredicate: predicate)?.first
+        } catch {
+            throw CoreDataManagerError.cantGetEntity
+        }
+    }
+    
+    public func createObject <T: NSManagedObject> () throws -> T {
+        do {
+            let managedContext = try self.getManagedContext()
+            guard let entity = NSEntityDescription.entity(forEntityName: String(describing: T.self), in: managedContext), let obj = NSManagedObject(entity: entity, insertInto: managedContext) as? T else {
+                fatalError("entity dosen´t exist")
+            }
+            return obj
+        }
+    }
+    
+    public func deleteObject (_ object: NSManagedObject) throws {
+        do {
+            let managedContext = try self.getManagedContext()
+            managedContext.delete(object)
+        }
+    }
+    
+    public func save () throws {
+        do {
+            let managedContext = try self.getManagedContext()
+            do {
+                try managedContext.save()
+            } catch {
+                throw CoreDataManagerError.cantSaveContext
+            }
         }
     }
     
@@ -62,9 +81,9 @@ public class CoreDataManager {
     
     //    MARK: Private methods
     
-    static func getManagedContext () -> NSManagedObjectContext {
+    private func getManagedContext () throws -> NSManagedObjectContext {
         guard let managedContext = self.managedContext else {
-            fatalError("managedContext is not set")
+            throw CoreDataManagerError.managedContextNotSet
         }
         return managedContext
     }
